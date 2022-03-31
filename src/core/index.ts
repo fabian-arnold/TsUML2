@@ -8,7 +8,7 @@ import { FileDeclaration } from "./model";
 import * as fs from 'fs';
 
 
-function parse(tsConfigPath: string, pattern: string): FileDeclaration[] {
+function parse(tsConfigPath: string, pattern: string | string[]): FileDeclaration[] {
   const ast = getAst(tsConfigPath, pattern);
   const files = ast.getSourceFiles();
   // parser
@@ -40,7 +40,7 @@ function emit(declarations: FileDeclaration[]) {
     return [...classes, ...interfaces, ...enums, ...flatten(heritageClauses)];
   });
 
-  return getStyling() + join(flatten(entities), "\n");
+  return getStyling() + "\n" + join(flatten(entities), "\n");
 }
 
 function getStyling(): string {

@@ -3,7 +3,7 @@ import { templates }from "./templates";
 
 
 export function emitSingleClass(cls: Clazz) {
-    return templates.class(cls.name, cls.properties.map(escapePropertyDetails), cls.methods.map(escapeMethodDetails));
+    return templates.class(cls.name, cls.properties.map(escapePropertyDetails), cls.methods.map(escapeMethodDetails), cls.isAbstract);
 }
 
 export function emitSingleInterface(int: Interface) {

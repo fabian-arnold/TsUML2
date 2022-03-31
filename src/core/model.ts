@@ -30,11 +30,15 @@ export interface HeritageClause {
 }
 
 
-export interface ClassOrIfOptions {
+export interface IfOptions {
     name: string,
     id: string,
     properties: PropertyDetails[],
     methods: MethodDetails[]
+}
+
+export interface ClassOptions extends IfOptions {
+    isAbstract: boolean
 }
 
 export interface FileDeclaration {
@@ -80,7 +84,7 @@ export class Interface extends NamedType {
     properties: PropertyDetails[];
     methods: MethodDetails[];
 
-    constructor(options: ClassOrIfOptions) {
+    constructor(options: IfOptions) {
         super(options)
         this.properties = options.properties;
         this.methods = options.methods;
@@ -89,6 +93,13 @@ export class Interface extends NamedType {
 }
 
 export class Clazz extends Interface {
+
+    isAbstract: boolean;
+
+    constructor(options: ClassOptions) {
+        super(options)
+        this.isAbstract = options.isAbstract;
+    }
 
 }
 

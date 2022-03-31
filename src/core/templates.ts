@@ -15,8 +15,8 @@ export const templates = {
     plainClassOrInterface: (name: string) => `[${name}]`,
     colorClass: (name: string) => `[${name}]`,
     colorInterface: (name: string) => `[${name}]`,
-    class: (name: string, props: PropertyDetails[], methods: MethodDetails[]) => {
-        return `[${name}|${props.map(propertyTemplate).join(";")}|${methods.map(methodTemplate).join(";")}]`;
+    class: (name: string, props: PropertyDetails[], methods: MethodDetails[], isAbstract: boolean) => {
+        return `[${isAbstract ? "<abstract>" : ""}${name}|${props.map(propertyTemplate).join(";")}|${methods.map(methodTemplate).join(";")}]`;
     },
     interface: (
         name: string,

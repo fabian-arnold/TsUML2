@@ -6,7 +6,7 @@ export class TsUML2Settings {
     /**
      * required
      */
-    glob: string = ""; 
+    glob: string | string[] = ""; 
 
     /**
      * the path to the tsconfig.json file
@@ -39,6 +39,10 @@ export class TsUML2Settings {
      */
     nomnoml: string[] = [];
 
+    /**
+     * skip private members
+     */
+    skipPrivate = false;
 
     /**
      * parses a json file and merges in the provided options
@@ -54,6 +58,7 @@ export class TsUML2Settings {
             alias: "g",
             describe: "pattern to match the source files (i.e.: ./src/**/*.ts)",
             string: true,
+            array: true,
             required: true
         }).option('tsconfig',{
             default: this.tsconfig,
@@ -81,6 +86,10 @@ export class TsUML2Settings {
         }).option('config', {
             describe: "path to a json config file (command line options can be provided as keys in it)",
             string: true
+        }).option('skipPrivate', {
+            describe: "skip private members",
+            boolean: true,
+            default: false
         }).argv;
 
         if (argv.config) {
@@ -103,6 +112,10 @@ export class TsUML2Settings {
        
         if(argv.nomnoml) {
             this.nomnoml = argv.nomnoml;
+        }
+       
+        if(argv.skipPrivate) {
+            this.skipPrivate = argv.skipPrivate;
         }
 
         if(argv.modifiers != null && !(yargs.parsed as any).defaulted.modifiers) {

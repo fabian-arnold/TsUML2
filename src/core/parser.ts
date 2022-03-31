@@ -1,32 +1,48 @@
 import * as SimpleAST from "ts-morph";
+import { ModifierFlags } from "typescript";
 
 import { PropertyDetails, MethodDetails, HeritageClause, HeritageClauseType, Interface, Clazz, Enum } from "./model";
+import { SETTINGS } from "./tsuml2-settings";
 
 
-export function getAst(tsConfigPath: string, sourceFilesPathsGlob?: string) {
+export function getAst(tsConfigPath: string, sourceFilesPathsGlob?: string | string[]) {
     const ast = new SimpleAST.Project({
         tsConfigFilePath: tsConfigPath,
         addFilesFromTsConfig: !sourceFilesPathsGlob
     });
     if (sourceFilesPathsGlob) {
-        ast.addSourceFilesAtPaths(sourceFilesPathsGlob);
+        if (Array.isArray(sourceFilesPathsGlob)) {
+            for (const sourceFile of sourceFilesPathsGlob) {
+                ast.addSourceFilesAtPaths(sourceFile);
+            }
+        } else {
+            ast.addSourceFilesAtPaths(sourceFilesPathsGlob);
+        }
     }
     return ast;
+}
+
+function maybeExcludePrivate(property: PropertyDetails | undefined): boolean {
+    if(SETTINGS.skipPrivate && property && property.modifierFlags & ModifierFlags.Private){
+        return false;
+    }
+    return true;
 }
 
 export function parseClasses(classDeclaration: SimpleAST.ClassDeclaration) {
     
     const className = getClassOrInterfaceName(classDeclaration) || "undefined";
-    const propertyDeclarations = classDeclaration.getProperties();
+    const propertyDeclarations = [...classDeclaration.getProperties(), ...classDeclaration.getGetAccessors()];
     const methodDeclarations = classDeclaration.getMethods();
     const ctors = classDeclaration.getConstructors();
+    const isAbstract = classDeclaration.isAbstract();
 
     let id = classDeclaration.getSymbol()?.getFullyQualifiedName() ?? "";
     if (!id.length) {
         console.error("missing class id");
     }
 
-    let properties = propertyDeclarations.map(parseProperty).filter((p) => p !== undefined) as PropertyDetails[];
+    let properties = propertyDeclarations.map(parseProperty).filter((p) => p !== undefined).filter(maybeExcludePrivate) as PropertyDetails[];
 
     if (ctors && ctors.length) {
         //find the properties declared by using a modifier before a constructor paramter
@@ -42,7 +58,7 @@ export function parseClasses(classDeclaration: SimpleAST.ClassDeclaration) {
 
     const methods = methodDeclarations.map(parseMethod).filter((p) => p !== undefined) as MethodDetails[];
 
-    return new Clazz({ name: className, properties, methods, id });
+    return new Clazz({ name: className, properties, methods, id, isAbstract });
 }
 
 export function parseInterfaces(interfaceDeclaration: SimpleAST.InterfaceDeclaration) {
@@ -57,15 +73,15 @@ export function parseInterfaces(interfaceDeclaration: SimpleAST.InterfaceDeclara
     }
 
 
-    const properties = propertyDeclarations.map(parseProperty).filter((p) => p !== undefined) as PropertyDetails[];
+    const properties = propertyDeclarations.map(parseProperty).filter((p) => p !== undefined).filter(maybeExcludePrivate) as PropertyDetails[];
     const methods = methodDeclarations.map(parseMethod).filter((p) => p !== undefined) as MethodDetails[];
   
     return new Interface({ name: interfaceName, properties, methods, id });
 }
 
-function parseProperty(propertyDeclaration: SimpleAST.PropertyDeclaration | SimpleAST.PropertySignature | SimpleAST.ParameterDeclaration) : PropertyDetails | undefined {
+function parseProperty(propertyDeclaration: SimpleAST.PropertyDeclaration | SimpleAST.PropertySignature | SimpleAST.ParameterDeclaration | SimpleAST.GetAccessorDeclaration) : PropertyDetails | undefined {
     const sym = propertyDeclaration.getSymbol();
-    
+
     if (sym) {
         return {            
             modifierFlags: propertyDeclaration.getCombinedModifierFlags(),
